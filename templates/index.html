@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Home - HealthGuard Dashboard{% endblock %}
+
+{% block head_extra %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 100px 0 80px;
+        margin-top: -20px;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+        height: 100%;
+        border: none;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .how-it-works-step {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        border-left: 5px solid #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section" data-aos="fade-up">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-12 text-center">
+                <h1 class="display-4 fw-bold mb-4">Your Personal Health Guardian</h1>
+                <p class="lead mb-4 mx-auto" style="max-width: 800px;">AI-powered health risk assessment with machine
+                    learning and medical expertise. Get personalized insights and recommendations for a healthier
+                    lifestyle.</p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{{ url_for('predict') }}" class="btn btn-light btn-lg px-4 py-3">
+                        <i class="fas fa-play-circle me-2"></i>Start Free Assessment
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+                <div class="stat-card">
+                    <div class="stat-number">{{ total_predictions|default(0) }}</div>
+                    <div>Health Assessments</div>
+                    <i class="fas fa-chart-line mt-3"></i>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="stat-number">98%</div>
+                    <div>Accuracy Rate</div>
+                    <i class="fas fa-bullseye mt-3"></i>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+                <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                    <div class="stat-number">24/7</div>
+                    <div>Available</div>
+                    <i class="fas fa-clock mt-3"></i>
+                </div>
+            </div>
+            <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+                <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="stat-number">100%</div>
+                    <div>Personalized</div>
+                    <i class="fas fa-user-check mt-3"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">Why Choose HealthGuard?</h2>
+            <p class="lead text-muted">Advanced features powered by AI and medical expertise</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h4>AI + Medical Rules</h4>
+                    <p>Combines machine learning predictions with expert medical guidelines for accurate risk
+                        assessment.</p>
+                    <ul class="list-unstyled mt-3">
+                        <li><i class="fas fa-check text-success me-2"></i> Predictive Analytics</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Medical Validation</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Real-time Processing</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-network"></i>
+                    </div>
+                    <h4>Comprehensive Insights</h4>
+                    <p>Detailed analytics and visualization of your health metrics with interactive dashboards.</p>
+                    <ul class="list-unstyled mt-3">
+                        <li><i class="fas fa-check text-success me-2"></i> Interactive Charts</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Trend Analysis</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Risk Factor Mapping</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h4>Personalized Guidance</h4>
+                    <p>Tailored recommendations based on your unique health profile and lifestyle factors.</p>
+                    <ul class="list-unstyled mt-3">
+                        <li><i class="fas fa-check text-success me-2"></i> Custom Action Plans</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Progress Tracking</li>
+                        <li><i class="fas fa-check text-success me-2"></i> Preventive Strategies</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">How It Works</h2>
+            <p class="lead text-muted">Simple steps to better health insights</p>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="how-it-works-step" data-aos="fade-right">
+                    <div class="d-flex align-items-center">
+                        <div class="step-number me-4">
+                            <span class="badge bg-primary rounded-circle p-3">1</span>
+                        </div>
+                        <div>
+                            <h4 class="mb-2">Complete Health Assessment</h4>
+                            <p class="mb-0">Fill out our comprehensive health questionnaire covering lifestyle, medical
+                                history, and daily habits.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="how-it-works-step" data-aos="fade-right" data-aos-delay="100">
+                    <div class="d-flex align-items-center">
+                        <div class="step-number me-4">
+                            <span class="badge bg-primary rounded-circle p-3">2</span>
+                        </div>
+                        <div>
+                            <h4 class="mb-2">AI-Powered Analysis</h4>
+                            <p class="mb-0">Our system analyzes your data using machine learning models and medical
+                                rules to assess health risks.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="how-it-works-step" data-aos="fade-right" data-aos-delay="200">
+                    <div class="d-flex align-items-center">
+                        <div class="step-number me-4">
+                            <span class="badge bg-primary rounded-circle p-3">3</span>
+                        </div>
+                        <div>
+                            <h4 class="mb-2">Get Detailed Results</h4>
+                            <p class="mb-0">Receive comprehensive risk assessment with visualizations and understandable
+                                explanations.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="how-it-works-step" data-aos="fade-right" data-aos-delay="300">
+                    <div class="d-flex align-items-center">
+                        <div class="step-number me-4">
+                            <span class="badge bg-primary rounded-circle p-3">4</span>
+                        </div>
+                        <div>
+                            <h4 class="mb-2">Personalized Recommendations</h4>
+                            <p class="mb-0">Get actionable health recommendations tailored to your specific needs and
+                                goals.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{{ url_for('predict') }}" class="btn btn-primary btn-lg px-5 py-3">
+                <i class="fas fa-rocket me-2"></i>Start Your Journey to Better Health
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials (Optional) -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3">Trusted by Health Enthusiasts</h2>
+            <p class="lead text-muted">What our users say about HealthGuard</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up">
+                <div class="card testimonial-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-quote-left text-primary fa-2x"></i>
+                        </div>
+                        <p class="card-text">"The insights helped me identify risk factors I wasn't aware of. The
+                            recommendations were practical and easy to implement."</p>
+                        <div class="d-flex align-items-center mt-4">
+                            <div>
+                                <h6 class="mb-0">Sarah Johnson</h6>
+                                <small class="text-muted">Health Coach</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card testimonial-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-quote-left text-primary fa-2x"></i>
+                        </div>
+                        <p class="card-text">"The dashboard is incredibly intuitive. Being able to see my health metrics
+                            visually made understanding my health much easier."</p>
+                        <div class="d-flex align-items-center mt-4">
+                            <div>
+                                <h6 class="mb-0">Michael Chen</h6>
+                                <small class="text-muted">Software Engineer</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card testimonial-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex mb-3">
+                            <i class="fas fa-quote-left text-primary fa-2x"></i>
+                        </div>
+                        <p class="card-text">"As someone with a family history of health issues, this tool has been
+                            invaluable for preventive care planning."</p>
+                        <div class="d-flex align-items-center mt-4">
+                            <div>
+                                <h6 class="mb-0">Dr. Emily Rodriguez</h6>
+                                <small class="text-muted">Medical Practitioner</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

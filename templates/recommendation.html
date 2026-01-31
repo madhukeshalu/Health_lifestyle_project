@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Health Recommendations{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Main Recommendations Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Personalized Health Recommendations</h3>
+            </div>
+            <div class="card-body">
+                {% if result %}
+                <div class="alert alert-primary">
+                    <h5><i class="fas fa-user-md me-2"></i>Health Status: {{ result.health_status }}</h5>
+                    <p class="mb-0">Based on your assessment completed on {{ session_id[:8] if session_id else 'today' }}</p>
+                </div>
+                
+                <!-- Health Suggestions -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Action Plan</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="recommendations-box p-3 bg-white border rounded">
+                                    {{ result.health_suggestion|replace('\n', '<br>')|safe }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Risk Factor Analysis -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Risk Factor Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Top Priority Areas:</h6>
+                                <ul class="list-group">
+                                    {% for factor in result.risk_factors[:5] %}
+                                    <li class="list-group-item">
+                                        <span class="badge bg-danger me-2">{{ loop.index }}</span>
+                                        {{ factor }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light h-100">
+                                    <div class="card-body">
+                                        <h6><i class="fas fa-clock me-2"></i>Timeline Suggestions</h6>
+                                        <ul>
+                                            {% if result.final_risk_category == 'High Risk' %}
+                                            <li><strong>Immediate (1-4 weeks):</strong> Consult healthcare provider</li>
+                                            <li><strong>Short-term (1-3 months):</strong> Implement lifestyle changes</li>
+                                            <li><strong>Long-term (3-12 months):</strong> Maintain improvements</li>
+                                            {% elif result.final_risk_category == 'Medium Risk' %}
+                                            <li><strong>Short-term (1-2 months):</strong> Start lifestyle adjustments</li>
+                                            <li><strong>Medium-term (2-6 months):</strong> Monitor progress</li>
+                                            <li><strong>Long-term (6+ months):</strong> Sustain healthy habits</li>
+                                            {% else %}
+                                            <li><strong>Ongoing:</strong> Maintain current healthy habits</li>
+                                            <li><strong>Preventive:</strong> Regular health check-ups</li>
+                                            <li><strong>Optimization:</strong> Fine-tune wellness practices</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                    <h4>No Assessment Data Available</h4>
+                    <p>Please complete the risk prediction form first to get personalized recommendations.</p>
+                    <a href="{{ url_for('predict') }}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Start Assessment
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- General Health Tips -->
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-seedling me-2"></i>General Health Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-info">
+                            <div class="card-body">
+                                <h6><i class="fas fa-utensils text-info me-2"></i>Nutrition</h6>
+                                <ul class="small">
+                                    <li>Eat 5+ servings of fruits/vegetables daily</li>
+                                    <li>Choose whole grains over refined carbs</li>
+                                    <li>Limit processed and fast foods</li>
+                                    <li>Stay hydrated with water</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-success">
+                            <div class="card-body">
+                                <h6><i class="fas fa-running text-success me-2"></i>Exercise</h6>
+                                <ul class="small">
+                                    <li>150+ minutes moderate exercise weekly</li>
+                                    <li>Include strength training 2x/week</li>
+                                    <li>Take breaks from sitting</li>
+                                    <li>Find activities you enjoy</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-warning">
+                            <div class="card-body">
+                                <h6><i class="fas fa-brain text-warning me-2"></i>Mental Health</h6>
+                                <ul class="small">
+                                    <li>Practice stress management daily</li>
+                                    <li>Get 7-9 hours of quality sleep</li>
+                                    <li>Maintain social connections</li>
+                                    <li>Take regular digital detoxes</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

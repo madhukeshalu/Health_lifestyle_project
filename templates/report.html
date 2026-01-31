@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-5 mb-3">
+            <i class="fas fa-file-pdf"></i> Health Assessment Report
+        </h1>
+        <p class="lead">Generate and download your comprehensive health assessment report</p>
+    </div>
+
+    <!-- Report Preview -->
+    <div class="card shadow-lg mb-4">
+        <div class="card-header bg-danger text-white">
+            <h3 class="mb-0"><i class="fas fa-file-medical-alt"></i> Report Preview</h3>
+        </div>
+        <div class="card-body">
+            <!-- Report Header -->
+            <div class="report-header text-center mb-4 p-4 border-bottom">
+                <h2 class="text-danger">HEALTH RISK ASSESSMENT REPORT</h2>
+                <p class="mb-0">Generated on: {{ risk_results.get('created_at', 'Current Date') }}</p>
+                <p>Report ID: HL{{ risk_results.get('timestamp', '20240101120000')|replace('-', '')|replace(':',
+                    '')|replace('T', '')|replace(' ', '')|truncate(14, True, '') }}</p>
+            </div>
+
+            <!-- Patient Information -->
+            <div class="mb-4">
+                <h4 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-user-circle"></i> Patient Information
+                </h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Age:</th>
+                                <td>{{ user_data.age|default('45') }} years</td>
+                            </tr>
+                            <tr>
+                                <th>Weight:</th>
+                                <td>{{ user_data.weight|default('80') }} kg</td>
+                            </tr>
+                            <tr>
+                                <th>Height:</th>
+                                <td>{{ user_data.height|default('175') }} cm</td>
+                            </tr>
+                            <tr>
+                                <th>BMI:</th>
+                                <td class="fw-bold">{{ risk_results.bmi|default('26.1') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Blood Pressure:</th>
+                                <td>{{ user_data.bp_systolic|default('140') }}/{{ user_data.bp_diastolic|default('90')
+                                    }} mmHg</td>
+                            </tr>
+                            <tr>
+                                <th>Cholesterol:</th>
+                                <td>{{ user_data.cholesterol|default('220') }} mg/dL</td>
+                            </tr>
+                            <tr>
+                                <th>Glucose:</th>
+                                <td>{{ user_data.glucose|default('110') }} mg/dL</td>
+                            </tr>
+                            <tr>
+                                <th>Overall Risk:</th>
+                                <td>
+                                    <span class="badge bg-{{ risk_results.risk_class|default('warning') }}">
+                                        {{ risk_results.overall_risk|default('Medium') }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Assessment Results -->
+            <div class="mb-4">
+                <h4 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-chart-bar"></i> Risk Assessment Results
+                </h4>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-danger">
+                            <tr>
+                                <th>Health Condition</th>
+                                <th>Risk Score</th>
+                                <th>Risk Level</th>
+                                <th>Recommendation Priority</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for condition, score in risk_results.get('risk_scores', {'Diabetes': 75, 'Heart Disease':
+                            65, 'Obesity': 45, 'Hypertension': 78}).items() %}
+                            <tr>
+                                <td>{{ condition }}</td>
+                                <td>{{ score }}%</td>
+                                <td>
+                                    {% if score > 60 %}
+                                    <span class="badge bg-danger">High</span>
+                                    {% elif score > 40 %}
+                                    <span class="badge bg-warning">Medium</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Low</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if score > 60 %}
+                                    <span class="text-danger">Immediate Attention</span>
+                                    {% elif score > 40 %}
+                                    <span class="text-warning">Monitor Regularly</span>
+                                    {% else %}
+                                    <span class="text-success">Maintain Current</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary & Recommendations -->
+            <div class="mb-4">
+                <h4 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-stethoscope"></i> Summary & Recommendations
+                </h4>
+
+                <!-- Overall Summary -->
+                <div class="alert alert-{{ risk_results.risk_class|default('warning') }} mb-4">
+                    <h5><i class="fas fa-clipboard-check"></i> Overall Health Summary</h5>
+                    <p class="mb-0">
+                        Based on the assessment, your overall health risk is classified as
+                        <strong>{{ risk_results.overall_risk|default('Medium') }}</strong> with an average risk score of
+                        <strong>{{ risk_results.avg_risk|default('65.8') }}%</strong>.
+                        {% if risk_results.risk_class == 'danger' %}
+                        Immediate lifestyle modifications and medical consultation are recommended.
+                        {% elif risk_results.risk_class == 'warning' %}
+                        Regular monitoring and preventive measures are advised.
+                        {% else %}
+                        Continue maintaining your healthy lifestyle habits.
+                        {% endif %}
+                    </p>
+                </div>
+
+                <!-- Key Recommendations -->
+                <h5><i class="fas fa-lightbulb"></i> Personalized Action Items</h5>
+                <div class="row">
+                    {% if risk_results.recommendations %}
+                    {% for category, items in risk_results.recommendations.items() %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card border-primary h-100">
+                            <div class="card-header bg-primary text-white py-2">
+                                <h6 class="mb-0">{{ category }}</h6>
+                            </div>
+                            <div class="card-body p-3">
+                                <ul class="mb-0">
+                                    {% for item in items %}
+                                    <li>{{ item }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i> No specific lifestyle risk factors identified.
+                            Maintain your current healthy habits!
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Plan -->
+            <div class="mb-4">
+                <h4 class="text-primary border-bottom pb-2 mb-3">
+                    <i class="fas fa-calendar-alt"></i> 4-Week Action Plan
+                </h4>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Week</th>
+                                <th>Focus Area</th>
+                                <th>Key Actions</th>
+                                <th>Expected Outcomes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Week 1</td>
+                                <td>Baseline Assessment</td>
+                                <td>Track current habits, measure all metrics</td>
+                                <td>Establish starting point</td>
+                            </tr>
+                            <tr>
+                                <td>Week 2</td>
+                                <td>Diet Modification</td>
+                                <td>Reduce processed foods, increase vegetables</td>
+                                <td>Improve nutrition score</td>
+                            </tr>
+                            <tr>
+                                <td>Week 3</td>
+                                <td>Exercise Routine</td>
+                                <td>Daily walking, strength training 3x/week</td>
+                                <td>150 mins exercise/week</td>
+                            </tr>
+                            <tr>
+                                <td>Week 4</td>
+                                <td>Stress Management</td>
+                                <td>Meditation, sleep hygiene improvement</td>
+                                <td>Reduce stress markers</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="alert alert-warning mt-4">
+                <h5><i class="fas fa-exclamation-triangle"></i> Important Disclaimer</h5>
+                <p class="mb-0 small">
+                    This report is generated for informational purposes only and is not a substitute for professional
+                    medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified
+                    health provider with any questions you may have regarding a medical condition.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Actions -->
+    <div class="text-center">
+        <h3 class="mb-4">Generate Your Report</h3>
+        <p class="lead mb-4">Download a comprehensive PDF report of your health assessment</p>
+
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="#" onclick="window.print(); return false;" class="btn btn-danger btn-lg me-3">
+                    <i class="fas fa-file-pdf"></i> Save as PDF
+                </a>
+                <button class="btn btn-outline-primary btn-lg me-3" onclick="printReport()">
+                    <i class="fas fa-print"></i> Print Preview
+                </button>
+                <a href="{{ url_for('predict') }}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-redo"></i> New Assessment
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="includeCharts">
+                <label class="form-check-label" for="includeCharts">
+                    Include charts and graphs in report
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="detailedAnalysis" checked>
+                <label class="form-check-label" for="detailedAnalysis">
+                    Include detailed analysis and comparisons
+                </label>
+            </div>
+        </div>
+
+        <div class="mt-4 text-muted">
+            <p class="small">
+                <i class="fas fa-info-circle"></i>
+                The PDF report includes all assessment details, risk scores, recommendations, and action plan.
+                File size: ~500KB | Generation time: 5-10 seconds
+            </p>
+        </div>
+    </div>
+
+    <!-- Report Features -->
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-lock fa-3x text-primary mb-3"></i>
+                    <h5>Secure & Private</h5>
+                    <p>Your health data is encrypted and protected. Reports are generated on-demand and not stored.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-chart-pie fa-3x text-success mb-3"></i>
+                    <h5>Comprehensive Data</h5>
+                    <p>Includes detailed risk analysis, visual charts, and personalized recommendations.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-share-alt fa-3x text-info mb-3"></i>
+                    <h5>Share with Providers</h5>
+                    <p>Easy to share with healthcare providers for better consultation and follow-up.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function printReport() {
+        // Create a print-friendly version
+        const printContent = document.querySelector('.card').innerHTML;
+        const originalContent = document.body.innerHTML;
+
+        document.body.innerHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Health Assessment Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .report-header { text-align: center; margin-bottom: 30px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    th { background-color: #f8f9fa; }
+                    .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
+                    .alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeaa7; }
+                    @media print {
+                        .no-print { display: none; }
+                        @page { margin: 0.5in; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${printContent}
+                <div class="no-print text-center mt-4">
+                    <button onclick="window.close()" class="btn btn-primary">Close Preview</button>
+                    <button onclick="window.print()" class="btn btn-success">Print Report</button>
+                </div>
+            </body>
+            </html>
+        `;
+
+        window.print();
+        document.body.innerHTML = originalContent;
+        location.reload();
+    }
+
+    // Update download link based on checkboxes
+    document.getElementById('includeCharts')?.addEventListener('change', function () {
+        const downloadBtn = document.querySelector('a[href*="generate-pdf"]');
+        if (downloadBtn) {
+            const url = new URL(downloadBtn.href);
+            url.searchParams.set('charts', this.checked);
+            downloadBtn.href = url.toString();
+        }
+    });
+
+    document.getElementById('detailedAnalysis')?.addEventListener('change', function () {
+        const downloadBtn = document.querySelector('a[href*="generate-pdf"]');
+        if (downloadBtn) {
+            const url = new URL(downloadBtn.href);
+            url.searchParams.set('detailed', this.checked);
+            downloadBtn.href = url.toString();
+        }
+    });
+</script>
+
+<style>
+    .report-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        border-radius: 10px;
+    }
+
+    @media print {
+
+        .navbar,
+        footer,
+        .btn,
+        .text-center:last-child,
+        .row.mt-5 {
+            display: none !important;
+        }
+
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+
+{% block title %}Results - HealthGuard{% endblock %}
+
+{% block head_extra %}
+<!-- In results.html -->
+<a href="{{ url_for('show_recommendations') }}" class="btn btn-success btn-lg">
+    <i class="fas fa-lightbulb me-2"></i>View Recommendations
+</a>
+<a href="{{ url_for('generate_report') }}" class="btn btn-primary btn-lg">
+    <i class="fas fa-file-pdf me-2"></i>View Report
+</a>
+<a href="{{ url_for('show_insights') }}" class="btn btn-info btn-lg">
+    <i class="fas fa-chart-bar me-2"></i>View Insights
+</a>
+<style>
+    .results-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 80px 0 40px;
+        margin-top: -20px;
+        border-radius: 0 0 30px 30px;
+    }
+
+    .risk-card {
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        border: none;
+        transition: transform 0.3s;
+    }
+
+    .risk-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .risk-badge {
+        font-size: 1.2rem;
+        padding: 10px 25px;
+        border-radius: 50px;
+        font-weight: 600;
+    }
+
+    .metric-card {
+        text-align: center;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        color: white;
+    }
+
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    .risk-factor-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .risk-factor-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        background: #fff5f5;
+        /* Light red tint */
+        border-left: 4px solid #dc3545;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        transition: transform 0.2s;
+    }
+
+    .risk-factor-item:hover {
+        transform: translateX(5px);
+        background: #ffebeb;
+    }
+
+    .risk-factor-icon {
+        color: #dc3545;
+        font-size: 1.1rem;
+        margin-right: 15px;
+        width: 24px;
+        text-align: center;
+    }
+
+    .risk-factor-text {
+        font-weight: 600;
+        color: #444;
+        font-size: 0.95rem;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+        height: 100%;
+    }
+
+    .progress-risk {
+        height: 25px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Results Header -->
+<div class="results-header" data-aos="fade-down">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">Your Health Assessment Results</h1>
+                <p class="lead mb-0">Comprehensive analysis of your health profile with AI-powered insights</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="d-flex flex-column gap-2 justify-content-lg-end">
+                    <div class="d-flex gap-2 justify-content-lg-end">
+                        <a href="{{ url_for('show_recommendations') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-lightbulb me-1"></i>Recommendations
+                        </a>
+                        <a href="{{ url_for('generate_report') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i>Report
+                        </a>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-lg-end">
+                        <a href="{{ url_for('show_insights') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-chart-bar me-1"></i>Insights
+                        </a>
+                        <a href="{{ url_for('predict') }}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-redo me-1"></i>New Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Risk Summary -->
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="risk-card" data-aos="fade-up">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-3">Overall Health Risk Assessment</h3>
+                        <p class="text-muted mb-4">Based on your input and our AI analysis</p>
+
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="me-4">
+                                <span class="risk-badge 
+                                    {% if result.final_risk_category == 'High Risk' %}bg-danger
+                                    {% elif result.final_risk_category == 'Medium Risk' %}bg-warning
+                                    {% else %}bg-success{% endif %}">
+                                    {{ result.final_risk_category }}
+                                </span>
+                            </div>
+                            <div>
+                                <h4 class="mb-0">{{ result.health_status }}</h4>
+                                <small class="text-muted">{{ result.risk_reason }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="display-4 fw-bold 
+                                {% if result.final_risk_category == 'High Risk' %}text-danger
+                                {% elif result.final_risk_category == 'Medium Risk' %}text-warning
+                                {% else %}text-success{% endif %}">
+                                {{ "%.1f"|format(result.high_risk_probability * 100) }}%
+                            </div>
+                            <small class="text-muted">High Risk Probability</small>
+                            <div class="progress progress-risk mt-2">
+                                <div class="progress-bar dynamic-width
+                                        {% if result.final_risk_category == 'High Risk' %}bg-danger
+                                        {% elif result.final_risk_category == 'Medium Risk' %}bg-warning
+                                        {% else %}bg-success{% endif %}"
+                                    data-width="{{ result.high_risk_probability * 100 }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="fas fa-weight fa-2x mb-3"></i>
+                <div class="metric-value">{{ "%.1f"|format(result.bmi) }}</div>
+                <div class="mb-2">{{ result.bmi_category }}</div>
+                <small>Body Mass Index</small>
+            </div>
+        </div>
+
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <i class="fas fa-heartbeat fa-2x mb-3"></i>
+                <div class="metric-value">{{ result.wellness_score }}</div>
+                <div class="mb-2">{{ result.wellness_category }}</div>
+                <small>Wellness Score /100</small>
+            </div>
+        </div>
+
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="metric-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                <div class="metric-value">{{ result.critical_factors_count }}</div>
+                <div class="mb-2">Critical Factors</div>
+                <small>Requiring Attention</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row">
+        <div class="col-lg-6">
+            <!-- Risk Factors Chart -->
+            <div class="chart-container" style="height: 450px;" data-aos="fade-up">
+                <h5 class="mb-4"><i class="fas fa-chart-pie me-2"></i>Risk Factors Distribution</h5>
+                <div style="position: relative; height: 350px;">
+                    <canvas id="riskFactorsChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <!-- Health Metrics Radar Chart -->
+            <div class="chart-container" style="height: 450px;" data-aos="fade-up" data-aos-delay="100">
+                <h5 class="mb-4"><i class="fas fa-chart-line me-2"></i>Health Metrics Overview</h5>
+                <div style="position: relative; height: 350px;">
+                    <canvas id="wellnessChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations & Timeline Section (On top of action buttons) -->
+    <div class="row">
+        <!-- Identified Risk Factors -->
+        <div class="col-lg-6">
+            <div class="chart-container" data-aos="fade-up" data-aos-delay="200">
+                <h5 class="mb-4 text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Identified Risk Factors
+                </h5>
+                <ul class="risk-factor-list mb-3">
+                    {% for factor in result.risk_factors %}
+                    <li class="risk-factor-item">
+                        <span class="risk-factor-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </span>
+                        <span class="risk-factor-text">{{ factor }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="text-center mt-3 pt-2 border-top">
+                    <small class="text-muted fw-bold">{{ result.risk_factors|length }} factors requiring
+                        attention</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Actions & Timeline -->
+        <div class="col-lg-6">
+            <div class="chart-container" data-aos="fade-up" data-aos-delay="300">
+                <h5 class="mb-4"><i class="fas fa-bullseye me-2"></i>Priority Focus & Timeline</h5>
+                <div class="alert 
+                    {% if result.final_risk_category == 'High Risk' %}alert-danger
+                    {% elif result.final_risk_category == 'Medium Risk' %}alert-warning
+                    {% else %}alert-success{% endif %}">
+                    <i class="fas fa-flag me-2"></i>
+                    <strong>Focus:</strong> {{ result.priority_focus }}
+                </div>
+
+                <div class="mt-4">
+                    <h6><i class="fas fa-clock me-2"></i>Recommended Timeline</h6>
+                    <div class="timeline">
+                        {% if result.final_risk_category == 'High Risk' %}
+                        <div class="timeline-item">
+                            <span class="badge bg-danger me-2">Now</span>
+                            <span>Consult healthcare provider</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span class="badge bg-warning me-2">1-4 weeks</span>
+                            <span>Implement lifestyle changes</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span class="badge bg-info me-2">1-3 months</span>
+                            <span>Follow-up assessment</span>
+                        </div>
+                        {% elif result.final_risk_category == 'Medium Risk' %}
+                        <div class="timeline-item">
+                            <span class="badge bg-warning me-2">1-2 weeks</span>
+                            <span>Start lifestyle adjustments</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span class="badge bg-info me-2">1 month</span>
+                            <span>Monitor progress</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span class="badge bg-success me-2">2-3 months</span>
+                            <span>Reassess health status</span>
+                        </div>
+                        {% else %}
+                        <div class="timeline-item">
+                            <span class="badge bg-success me-2">Ongoing</span>
+                            <span>Maintain healthy habits</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span class="badge bg-info me-2">6 months</span>
+                            <span>Routine check-up</span>
+                        </div>
+                        <div class="timeline-item">
+                            <span class="badge bg-primary me-2">1 year</span>
+                            <span>Comprehensive assessment</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card" data-aos="fade-up">
+                <div class="card-body text-center">
+                    <div class="d-flex flex-column flex-md-row justify-content-center gap-3">
+                        <a href="{{ url_for('show_recommendations') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-lightbulb me-2"></i>View Detailed Recommendations
+                        </a>
+                        <a href="{{ url_for('generate_report') }}" class="btn btn-success btn-lg">
+                            <i class="fas fa-file-pdf me-2"></i>Generate Full Report
+                        </a>
+                        <a href="{{ url_for('show_insights') }}" class="btn btn-info btn-lg">
+                            <i class="fas fa-chart-bar me-2"></i>View Data Insights
+                        </a>
+                        <a href="{{ url_for('predict') }}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-redo me-2"></i>New Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model vs Final Results -->
+    {% if result.warning %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info" data-aos="fade-up">
+                <h5><i class="fas fa-info-circle me-2"></i>Analysis Note</h5>
+                <p class="mb-0">{{ result.warning }}</p>
+                <hr>
+                <small>
+                    <strong>Model Prediction:</strong> {{ result.model_risk_category }} |
+                    <strong>Final Assessment:</strong> {{ result.final_risk_category }}
+                </small>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Hidden JSON data for charts -->
+<script id="risk-factors-data" type="application/json">
+        {{ charts.risk_factors | tojson }}
+    </script>
+<script id="health-metrics-data" type="application/json">
+        {{ charts.health_metrics | tojson }}
+    </script>
+
+<script>
+    // Set global Chart.js defaults for maximum SHARPNESS
+    Chart.defaults.font.family = "'Poppins', sans-serif";
+    Chart.defaults.font.size = 14;
+    Chart.defaults.font.weight = '600';
+    Chart.defaults.color = '#222';
+    Chart.defaults.devicePixelRatio = 2; // Force higher resolution scaling
+    Chart.defaults.responsive = true;
+    Chart.defaults.maintainAspectRatio = false;
+
+    // Parse data
+    const riskFactorsData = JSON.parse(document.getElementById('risk-factors-data').textContent);
+    const healthMetricsData = JSON.parse(document.getElementById('health-metrics-data').textContent);
+
+    // Risk Factors Chart
+    const riskCtx = document.getElementById('riskFactorsChart').getContext('2d');
+    const riskChart = new Chart(riskCtx, {
+        type: 'doughnut',
+        data: {
+            labels: riskFactorsData.labels,
+            datasets: [{
+                data: riskFactorsData.data_values,
+                backgroundColor: [
+                    '#FF3D67', // More vibrant Pink
+                    '#0099FF', // More vibrant Blue
+                    '#FFBC00', // More vibrant Yellow
+                    '#1AD1C2', // More vibrant Teal
+                    '#8B3DFF', // More vibrant Purple
+                    '#FF7A00'  // More vibrant Orange
+                ],
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 15,
+                weight: 1
+            }]
+        },
+        options: {
+            layout: { padding: 25 },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 25,
+                        usePointStyle: true,
+                        font: { size: 14, weight: 'bold' }
+                    }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+
+    // Wellness Chart
+    const wellnessCtx = document.getElementById('wellnessChart').getContext('2d');
+    const wellnessChart = new Chart(wellnessCtx, {
+        type: 'radar',
+        data: {
+            labels: healthMetricsData.labels,
+            datasets: [{
+                label: 'Your Score',
+                data: healthMetricsData.user_scores,
+                backgroundColor: 'rgba(0, 153, 255, 0.3)', // Vibrant Blue
+                borderColor: '#0099FF',
+                borderWidth: 5,
+                pointBackgroundColor: '#0099FF',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 3,
+                pointRadius: 7,
+                pointHoverRadius: 9
+            }, {
+                label: 'Target',
+                data: healthMetricsData.target_scores,
+                backgroundColor: 'rgba(255, 61, 103, 0.1)', // Vibrant Pink
+                borderColor: '#FF3D67',
+                borderWidth: 3,
+                borderDash: [5, 5],
+                pointBackgroundColor: '#FF3D67',
+                pointRadius: 5
+            }]
+        },
+        options: {
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 20,
+                        backdropColor: 'transparent',
+                        font: { size: 13, weight: 'bold' },
+                        color: '#444'
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.08)',
+                        lineWidth: 1.5
+                    },
+                    angleLines: {
+                        color: 'rgba(0, 0, 0, 0.12)',
+                        lineWidth: 2
+                    },
+                    pointLabels: {
+                        font: { size: 15, weight: '800' },
+                        color: '#111'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { font: { size: 14, weight: 'bold' } }
+                }
+            }
+        }
+    });
+
+    // Animation for metric cards
+    document.addEventListener('DOMContentLoaded', function () {
+        const metricValues = document.querySelectorAll('.metric-value');
+        metricValues.forEach(value => {
+            const text = value.textContent;
+            const finalValue = parseFloat(text);
+            if (isNaN(finalValue)) return;
+
+            let currentValue = 0;
+            const increment = finalValue / 50;
+
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= finalValue) {
+                    value.textContent = finalValue.toFixed(1);
+                    clearInterval(timer);
+                } else {
+                    value.textContent = currentValue.toFixed(1);
+                }
+            }, 20);
+        });
+        // Apply dynamic widths
+        document.querySelectorAll('.dynamic-width').forEach(el => {
+            if (el.dataset.width) {
+                el.style.width = el.dataset.width + '%';
+            }
+        });
+    });
+</script>
+{% endblock %}

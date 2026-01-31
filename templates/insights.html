@@ -1,0 +1,605 @@
+{% extends "base.html" %}
+
+{% block title %}Data Insights - HealthGuard{% endblock %}
+
+{% block head_extra %}
+<style>
+    .insights-header {
+        background: linear-gradient(135deg, #1a2980 0%, #26d0ce 100%);
+        color: white;
+        padding: 80px 0 40px;
+        margin-top: -20px;
+        border-radius: 0 0 30px 30px;
+    }
+
+    .stats-grid {
+        margin-top: -50px;
+        position: relative;
+        z-index: 1000;
+    }
+
+    .stat-card-insight {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        height: 100%;
+        transition: transform 0.3s;
+        border: none;
+    }
+
+    .stat-card-insight:hover {
+        transform: translateY(-10px);
+    }
+
+    .insight-chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        margin-bottom: 25px;
+        height: 100%;
+    }
+
+    .risk-distribution {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .risk-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        background: #f8f9fa;
+        transition: all 0.3s;
+    }
+
+    .risk-item:hover {
+        transform: translateX(10px);
+        background: #e9ecef;
+    }
+
+    .risk-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+
+    .timeline-insight {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-insight::before {
+        content: '';
+        position: absolute;
+        left: 10px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #667eea, #764ba2);
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 25px;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -25px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #667eea;
+        border: 3px solid white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+
+    .data-table {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .table thead th {
+        background: #667eea;
+        color: white;
+        border: none;
+        font-weight: 500;
+    }
+
+    .table tbody tr {
+        transition: all 0.3s;
+    }
+
+    .table tbody tr:hover {
+        background: #f8f9fa;
+        transform: scale(1.01);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Insights Header -->
+<div class="insights-header" data-aos="fade-down">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">Data Insights Dashboard</h1>
+                <p class="lead mb-0">Analytics and trends from health assessments across all users</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-light" onclick="exportData('csv')">
+                        <i class="fas fa-file-csv me-2"></i>CSV
+                    </button>
+                    <button type="button" class="btn btn-light" onclick="exportData('json')">
+                        <i class="fas fa-file-code me-2"></i>JSON
+                    </button>
+                    <button type="button" class="btn btn-light" onclick="printInsights()">
+                        <i class="fas fa-print me-2"></i>Print
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Overview -->
+<div class="container stats-grid">
+    <div class="row g-4">
+        <div class="col-md-3" data-aos="fade-up">
+            <div class="stat-card-insight" style="border-top: 5px solid #667eea;">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-chart-bar fa-2x" style="color: #667eea;"></i>
+                </div>
+                <h3 class="stat-number">{{ stats.total_assessments|default(0) }}</h3>
+                <p class="stat-label">Total Assessments</p>
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar" style="width: 100%; background: #667eea;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+            <div class="stat-card-insight" style="border-top: 5px solid #28a745;">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-heartbeat fa-2x" style="color: #28a745;"></i>
+                </div>
+                <h3 class="stat-number">{{ "%.1f"|format(stats.avg_wellness|default(0)) }}</h3>
+                <p class="stat-label">Avg Wellness Score</p>
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar dynamic-width" data-width="{{ stats.avg_wellness|default(0) }}"
+                        style="background: #28a745;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+            <div class="stat-card-insight" style="border-top: 5px solid #ffc107;">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-weight fa-2x" style="color: #ffc107;"></i>
+                </div>
+                <h3 class="stat-number">{{ "%.1f"|format(stats.avg_bmi|default(0)) }}</h3>
+                <p class="stat-label">Average BMI</p>
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar dynamic-width" data-width="{{ (stats.avg_bmi|default(0)/40*100) }}"
+                        style="background: #ffc107;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+            <div class="stat-card-insight" style="border-top: 5px solid #dc3545;">
+                <div class="stat-icon mb-3">
+                    <i class="fas fa-exclamation-triangle fa-2x" style="color: #dc3545;"></i>
+                </div>
+                <h3 class="stat-number">{{ "%.1f"|format(stats.high_risk_pct|default(0)) }}%</h3>
+                <p class="stat-label">High Risk Percentage</p>
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar dynamic-width" data-width="{{ stats.high_risk_pct|default(0) }}"
+                        style="background: #dc3545;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="container mt-5">
+    {% if has_data %}
+    <div class="row">
+        <!-- Recent Assessments Table -->
+        <div class="row mt-4 mb-5">
+            <div class="col-12">
+                <div class="data-table" data-aos="fade-up">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Assessments</h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Risk Category</th>
+                                    <th>BMI</th>
+                                    <th>Wellness Score</th>
+                                    <th>Gender</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pred in predictions_history %}
+                                <tr>
+                                    <td>{{ pred.timestamp[:16]|replace('T', ' ') }}</td>
+                                    <td>
+                                        <span class="badge 
+                                        {% if pred.result.final_risk_category == 'High Risk' %}bg-danger
+                                        {% elif pred.result.final_risk_category == 'Medium Risk' %}bg-warning
+                                        {% else %}bg-success{% endif %}">
+                                            {{ pred.result.final_risk_category }}
+                                        </span>
+                                    </td>
+                                    <td>{{ "%.1f"|format(pred.result.bmi) }}</td>
+                                    <td>{{ pred.result.wellness_score }}</td>
+                                    <td>
+                                        {% if pred.form_data.gender is number %}
+                                        {{ 'F' if pred.form_data.gender == 0 else 'M' }}
+                                        {% else %}
+                                        {{ pred.form_data.gender|string|first }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                        {% if pred.result.health_status == 'Good' %}bg-success
+                                        {% elif pred.result.health_status == 'Needs Improvement' %}bg-warning
+                                        {% else %}bg-danger{% endif %}">
+                                            {{ pred.result.health_status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Row - Charts & Details -->
+        <div class="row">
+            <!-- Left Column - Detailed Charts -->
+            <div class="col-lg-8">
+                <div class="row">
+                    <!-- Wellness Trend Chart (Full Width) -->
+                    <div class="col-12">
+                        <div class="insight-chart-container" style="height: 400px;" data-aos="fade-up">
+                            <h5 class="mb-4"><i class="fas fa-chart-line me-2"></i>Wellness Scores Over Time</h5>
+                            <div style="position: relative; height: 300px;">
+                                <canvas id="wellnessTrendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Risk Distribution Chart -->
+                    <div class="col-md-6 mt-4">
+                        <div class="insight-chart-container" style="height: 450px;" data-aos="fade-up"
+                            data-aos-delay="100">
+                            <h5 class="mb-4"><i class="fas fa-chart-pie me-2"></i>Risk Category Distribution</h5>
+                            <div style="position: relative; height: 350px;">
+                                <canvas id="riskDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BMI Distribution Chart -->
+                    <div class="col-md-6 mt-4">
+                        <div class="insight-chart-container" style="height: 450px;" data-aos="fade-up"
+                            data-aos-delay="200">
+                            <h5 class="mb-4"><i class="fas fa-weight me-2"></i>BMI Categories Overview</h5>
+                            <div style="position: relative; height: 350px;">
+                                <canvas id="bmiDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Key Metrics Breakdown -->
+            <div class="col-lg-4">
+                <!-- Integrated Analytics Sidebar -->
+                <div class="insight-chart-container" data-aos="fade-up">
+                    <h5 class="mb-4"><i class="fas fa-percentage me-2"></i>Global Risk Breakdown</h5>
+                    <div class="risk-distribution mb-5">
+                        <div class="risk-item">
+                            <div class="risk-color" style="background: #28a745;"></div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span>Low Risk</span>
+                                    <strong>{{ "%.1f"|format(stats.low_risk_pct|default(0)) }}%</strong>
+                                </div>
+                                <small class="text-muted">Minimal health concerns</small>
+                            </div>
+                        </div>
+
+                        <div class="risk-item">
+                            <div class="risk-color" style="background: #ffc107;"></div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span>Medium Risk</span>
+                                    <strong>{{ "%.1f"|format(stats.medium_risk_pct|default(0)) }}%</strong>
+                                </div>
+                                <small class="text-muted">Needs improvement </small>
+                            </div>
+                        </div>
+
+                        <div class="risk-item">
+                            <div class="risk-color" style="background: #dc3545;"></div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span>High Risk</span>
+                                    <strong>{{ "%.1f"|format(stats.high_risk_pct|default(0)) }}%</strong>
+                                </div>
+                                <small class="text-muted">Requires attention</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h5 class="mb-4"><i class="fas fa-exclamation-circle me-2"></i>Common Risk Factors</h5>
+                    <div class="timeline-insight">
+                        <div class="timeline-item">
+                            <h6>Insufficient Exercise</h6>
+                            <small class="text-muted">65% of users</small>
+                            <div class="progress mt-2" style="height: 10px; border-radius: 5px;">
+                                <div class="progress-bar bg-warning" style="width: 65%"></div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h6>Poor Sleep Quality</h6>
+                            <small class="text-muted">55% of users</small>
+                            <div class="progress mt-2" style="height: 10px; border-radius: 5px;">
+                                <div class="progress-bar bg-info" style="width: 55%"></div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h6>High Stress Levels</h6>
+                            <small class="text-muted">48% of users</small>
+                            <div class="progress mt-2" style="height: 10px; border-radius: 5px;">
+                                <div class="progress-bar bg-danger" style="width: 48%"></div>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item">
+                            <h6>Unhealthy Diet</h6>
+                            <small class="text-muted">42% of users</small>
+                            <div class="progress mt-2" style="height: 10px; border-radius: 5px;">
+                                <div class="progress-bar bg-warning" style="width: 42%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        {% else %}
+        <!-- No Data State -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card text-center py-5" data-aos="fade-up">
+                    <div class="card-body">
+                        <i class="fas fa-database fa-4x text-muted mb-4"></i>
+                        <h3 class="mb-3">No Data Available</h3>
+                        <p class="text-muted mb-4">Complete health assessments to see data insights and analytics.</p>
+                        <a href="{{ url_for('predict') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>Start First Assessment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endblock %}
+
+    {% block scripts %}
+    {% if has_data %}
+    <!-- Hidden JSON data for charts -->
+    <script id="risk-data" type="application/json">
+        {{ charts.risk_distribution | tojson }}
+    </script>
+    <script id="bmi-data" type="application/json">
+        {{ charts.bmi_distribution | tojson }}
+    </script>
+    <script id="wellness-labels" type="application/json">
+        {{ charts.wellness_trend.dates | tojson }}
+    </script>
+    <script id="wellness-values" type="application/json">
+        {{ charts.wellness_trend.data_values | tojson }}
+    </script>
+    {% endif %}
+
+    <script id="has-data-flag" type="application/json">
+        {{ has_data | tojson }}
+    </script>
+    <script>
+        // Set global Chart.js defaults for maximum SHARPNESS
+        Chart.defaults.font.family = "'Poppins', sans-serif";
+        Chart.defaults.font.size = 14;
+        Chart.defaults.font.weight = '600';
+        Chart.defaults.color = '#222';
+        Chart.defaults.borderColor = 'rgba(0,0,0,0.1)';
+        Chart.defaults.devicePixelRatio = 2; // Force higher resolution scaling
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+        Chart.defaults.plugins.legend.labels.padding = 20;
+        Chart.defaults.plugins.legend.labels.usePointStyle = true;
+
+        const hasData = JSON.parse(document.getElementById('has-data-flag').textContent);
+
+        // Helper to format chart data with VIBRANT COLORS
+        function toChartData(chartData) {
+            if (!chartData || !chartData.labels) return { labels: [], datasets: [] };
+            const vibrantColors = [
+                '#FF3D67', // Pink
+                '#0099FF', // Blue
+                '#FFBC00', // Yellow
+                '#1AD1C2', // Teal
+                '#8B3DFF', // Purple
+                '#FF7A00', // Orange
+                '#FF5252'  // Red
+            ];
+            return {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.values || chartData.data_values,
+                    backgroundColor: chartData.colors || vibrantColors,
+                    borderWidth: 3,
+                    borderColor: '#fff',
+                    hoverOffset: 12
+                }]
+            };
+        }
+
+        if (hasData) {
+            // Prepare data from server
+            const riskData = JSON.parse(document.getElementById('risk-data').textContent);
+            const bmiData = JSON.parse(document.getElementById('bmi-data').textContent);
+            const wellnessLabels = JSON.parse(document.getElementById('wellness-labels').textContent);
+            const wellnessValues = JSON.parse(document.getElementById('wellness-values').textContent);
+
+            // Risk Distribution Chart
+            const riskDistCtx = document.getElementById('riskDistributionChart').getContext('2d');
+            const riskDistChart = new Chart(riskDistCtx, {
+                type: 'doughnut',
+                data: toChartData(riskData),
+                options: {
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.label + ': ' + context.raw + ' users';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // BMI Distribution Chart
+            const bmiDistCtx = document.getElementById('bmiDistributionChart').getContext('2d');
+            const bmiDistChart = new Chart(bmiDistCtx, {
+                type: 'bar',
+                data: toChartData(bmiData),
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Users'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Wellness Trend Chart
+            const wellnessTrendCtx = document.getElementById('wellnessTrendChart').getContext('2d');
+            const wellnessTrendChart = new Chart(wellnessTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: wellnessLabels,
+                    datasets: [{
+                        label: 'Average Wellness Score',
+                        data: wellnessValues,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 4,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#fff',
+                        pointBorderWidth: 3
+                    }]
+                },
+                options: {
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 25,
+                            top: 10,
+                            bottom: 10
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                drawBorder: false,
+                                color: 'rgba(0,0,0,0.05)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Wellness Score',
+                                font: { weight: 'bold', size: 15 }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Export functions
+        function exportData(format) {
+            alert('Exporting data as ' + format.toUpperCase() + '...');
+            // Implement actual export logic here
+        }
+
+        function printInsights() {
+            window.print();
+        }
+
+        // Auto-refresh data every 30 seconds
+        setInterval(() => {
+            if (window.location.pathname === '/insights') {
+                fetch('/api/chart-data')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update charts with new data
+                        console.log('Data refreshed:', data);
+                    });
+            }
+        }, 30000);
+
+        // Apply dynamic widths
+        document.querySelectorAll('.dynamic-width').forEach(el => {
+            if (el.dataset.width) {
+                el.style.width = el.dataset.width + '%';
+            }
+        });
+    </script>
+    {% endblock %}
